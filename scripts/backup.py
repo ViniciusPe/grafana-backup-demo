@@ -17,6 +17,7 @@ import logging
 import os
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -46,6 +47,50 @@ def env_token(instance_name: str) -> str:
     if not tok:
         raise GrafanaError(f"Variável de ambiente {key} não definida")
     return tok
+
+
+def git_last_commit(repo_root: Path, rel_path: str) -> tuple[str, str]:
+    """Retorna (sha curto, data ISO) do último commit que tocou o arquivo.
+
+    Vazio quando o arquivo é novo (ainda não commitado).
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(repo_root), "log", "-1",
+             "--format=%h|%ad", "--date=short", "--", rel_path],
+            capture_output=True, text=True, timeout=10, check=False,
+        )
+        line = (out.stdout or "").strip()
+        if not line:
+            return ("", "")
+        sha, _, date = line.partition("|")
+        return (sha.strip(), date.strip())
+    except Exception:
+        return ("", "")
+
+
+def write_index(inst_dir: Path, repo_root: Path, instance_name: str, entries: list[dict]) -> None:
+    """Gera INDEX.md com Title | UID | Folder | Last SHA | Last date | File."""
+    rows = sorted(entries, key=lambda e: (e["folder"].lower(), (e["title"] or "").lower()))
+    lines = [
+        f"# Index — {instance_name}",
+        "",
+        f"Total de dashboards: **{len(rows)}**.",
+        "",
+        "Para fazer restore, copie o **UID** e (opcionalmente) o **SHA** do último commit que tocou no dashboard.",
+        "",
+        "| Título | UID | Pasta | Último SHA | Última alteração | Arquivo |",
+        "|---|---|---|---|---|---|",
+    ]
+    for e in rows:
+        rel = e["rel_path"].replace("\\", "/")
+        sha, date = git_last_commit(repo_root, rel)
+        sha_md = f"`{sha}`" if sha else "_novo_"
+        date_md = date or "—"
+        title = (e["title"] or "").replace("|", "\\|")
+        folder = e["folder"].replace("|", "\\|")
+        lines.append(f"| {title} | `{e['uid']}` | {folder} | {sha_md} | {date_md} | [{rel}]({rel}) |")
+    (inst_dir / "INDEX.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def load_config() -> list[dict]:
@@ -95,6 +140,7 @@ def backup_instance(inst: dict, data_dir: Path) -> tuple[int, int]:
 
     saved = 0
     skipped = 0
+    index_entries: list[dict] = []
     for entry in found:
         uid = entry.get("uid")
         if not uid:
@@ -141,12 +187,21 @@ def backup_instance(inst: dict, data_dir: Path) -> tuple[int, int]:
         # Nome do arquivo é APENAS o UID para que renomear o dashboard não
         # gere delete+add no git (o título fica preservado dentro do JSON).
         fname = f"{uid}.json"
-        (sub / fname).write_text(
+        out_path = sub / fname
+        out_path.write_text(
             json.dumps(envelope, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
             encoding="utf-8",
         )
+        rel_path = out_path.relative_to(ROOT).as_posix()
+        index_entries.append({
+            "uid": uid,
+            "title": dashboard.get("title") or "",
+            "folder": folder_title,
+            "rel_path": rel_path,
+        })
         saved += 1
 
+    write_index(inst_dir, ROOT, name, index_entries)
     log.info("Instância %s -> salvos: %d, ignorados: %d", name, saved, skipped)
     return saved, skipped
 
