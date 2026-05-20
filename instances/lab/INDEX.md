@@ -1,8 +1,12 @@
 # Index — lab
 
-Total de dashboards: **5**.
+- Dashboards ativos: **5**
+- Dashboards removidos (histórico): **5**
 
-Para fazer restore, copie o **UID** e (opcionalmente) o **SHA** do último commit que tocou no dashboard.
+Para restaurar: copie o **UID** e o **SHA** da linha desejada.
+Para um dashboard **removido**, o SHA é o último commit em que ele existia — use exatamente esse valor em `ref` no workflow de restore.
+
+## Ativos
 
 | Título | UID | Pasta | Último SHA | Última alteração | Arquivo |
 |---|---|---|---|---|---|
@@ -11,3 +15,13 @@ Para fazer restore, copie o **UID** e (opcionalmente) o **SHA** do último commi
 | app-erros | `adtt47j` | produção | `25867ce` | 2026-05-20 | [instances/lab/dashboards/produ-o/adtt47j.json](instances/lab/dashboards/produ-o/adtt47j.json) |
 | app-latencia-v2 | `ad6sjzv` | produção | `c2faf16` | 2026-05-20 | [instances/lab/dashboards/produ-o/ad6sjzv.json](instances/lab/dashboards/produ-o/ad6sjzv.json) |
 | negocio-vendas | `ad4d8dk` | produção | `25867ce` | 2026-05-20 | [instances/lab/dashboards/produ-o/ad4d8dk.json](instances/lab/dashboards/produ-o/ad4d8dk.json) |
+
+## Removidos (histórico)
+
+| Título | UID | Pasta | SHA p/ restore | Removido após | Arquivo (snapshot) |
+|---|---|---|---|---|---|
+| (sem título) | `adk4pj6` | — | `f5a58dc` | 2026-05-20 | [instances/lab/dashboards/general/adk4pj6.json](../../tree/f5a58dc/instances/lab/dashboards/general/adk4pj6.json) |
+| (sem título) | `advh7z2` | — | `6dea904` | 2026-05-20 | [instances/lab/dashboards/general/advh7z2.json](../../tree/6dea904/instances/lab/dashboards/general/advh7z2.json) |
+| (sem título) | `ad64fpd` | — | `c4a8257` | 2026-05-20 | [instances/lab/dashboards/produ-o/ad64fpd.json](../../tree/c4a8257/instances/lab/dashboards/produ-o/ad64fpd.json) |
+| (sem título) | `adrcf7h` | — | `a823ce8` | 2026-05-20 | [instances/lab/dashboards/produ-o/adrcf7h.json](../../tree/a823ce8/instances/lab/dashboards/produ-o/adrcf7h.json) |
+| (sem título) | `adpwwzl` | — | `dad8f15` | 2026-05-20 | [instances/lab/dashboards/teste/adpwwzl.json](../../tree/dad8f15/instances/lab/dashboards/teste/adpwwzl.json) |
