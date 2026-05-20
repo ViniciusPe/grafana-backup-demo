@@ -1,0 +1,77 @@
+name: DEMO - Backup Grafana (lab)
+
+# Workflow simplificado para demo: 1 instância (lab), commits em main mesmo.
+# No Enterprise será matrix dev/hml/prd em branches env/*.
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # a cada 15 min, agressivo p/ demo
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: grafana-backup-demo
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+
+      - run: pip install -r scripts/requirements.txt
+
+      - name: Run backup
+        env:
+          GRAFANA_TOKEN_LAB: ${{ secrets.GRAFANA_TOKEN_LAB }}
+        run: python scripts/backup.py --instance lab
+
+      - name: Detect changes
+        id: diff
+        run: |
+          git add -A instances/
+          ADDED=$(git diff --cached --name-status -- instances/ | awk '$1=="A"' | wc -l)
+          MODIFIED=$(git diff --cached --name-status -- instances/ | awk '$1=="M"' | wc -l)
+          DELETED=$(git diff --cached --name-status -- instances/ | awk '$1=="D"' | wc -l)
+          echo "added=$ADDED"       >> "$GITHUB_OUTPUT"
+          echo "modified=$MODIFIED" >> "$GITHUB_OUTPUT"
+          echo "deleted=$DELETED"   >> "$GITHUB_OUTPUT"
+          if git diff --cached --quiet -- instances/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit & push
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          A: ${{ steps.diff.outputs.added }}
+          M: ${{ steps.diff.outputs.modified }}
+          D: ${{ steps.diff.outputs.deleted }}
+        run: |
+          git config user.name  "grafana-backup-bot"
+          git config user.email "grafana-backup-bot@users.noreply.github.com"
+          git commit -m "chore(backup): grafana sync (+${A} ~${M} -${D})"
+          git push
+
+      - run: |
+          {
+            echo "## Backup lab"
+            echo ""
+            echo "- Novos: ${{ steps.diff.outputs.added }}"
+            echo "- Alterados: ${{ steps.diff.outputs.modified }}"
+            echo "- Removidos: ${{ steps.diff.outputs.deleted }}"
+            echo "- Commit: ${{ steps.diff.outputs.changed }}"
+          } >> "$GITHUB_STEP_SUMMARY"

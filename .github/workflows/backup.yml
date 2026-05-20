@@ -1,0 +1,130 @@
+name: Backup Grafana Dashboards
+
+# Modelo: 1 ambiente = 1 branch (env/<env>).
+# Default branch deste repo: ops/grafana-backup (contém scripts + workflows).
+# Este workflow roda em matrix e dá push de cada env no seu branch correspondente.
+
+on:
+  # schedule desabilitado no repo de demo - habilitar no Enterprise
+  # schedule:
+  #   - cron: "0 * * * *"
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Ambiente a fazer backup"
+        required: true
+        type: choice
+        default: all
+        options:
+          - all
+          - dev
+          - hml
+          - prd
+
+permissions:
+  contents: write
+
+concurrency:
+  group: grafana-backup-${{ github.event.inputs.env || 'all' }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      envs: ${{ steps.set.outputs.envs }}
+    steps:
+      - id: set
+        run: |
+          REQ="${{ github.event.inputs.env }}"
+          if [ -z "$REQ" ] || [ "$REQ" = "all" ]; then
+            echo 'envs=["dev","hml","prd"]' >> "$GITHUB_OUTPUT"
+          else
+            echo "envs=[\"$REQ\"]" >> "$GITHUB_OUTPUT"
+          fi
+
+  backup:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        env: ${{ fromJSON(needs.plan.outputs.envs) }}
+    steps:
+      - name: Checkout default branch (scripts/workflows/config)
+        uses: actions/checkout@v4
+        with:
+          ref: ops/grafana-backup
+          path: main
+
+      - name: Checkout env branch (dados)
+        uses: actions/checkout@v4
+        with:
+          ref: env/${{ matrix.env }}
+          path: data
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: main/scripts/requirements.txt
+
+      - name: Install deps
+        run: pip install -r main/scripts/requirements.txt
+
+      - name: Run backup (${{ matrix.env }})
+        working-directory: main
+        env:
+          GRAFANA_TOKEN_DEV: ${{ secrets.GRAFANA_TOKEN_DEV }}
+          GRAFANA_TOKEN_HML: ${{ secrets.GRAFANA_TOKEN_HML }}
+          GRAFANA_TOKEN_PRD: ${{ secrets.GRAFANA_TOKEN_PRD }}
+        run: |
+          python scripts/backup.py \
+            --instance "${{ matrix.env }}" \
+            --data-dir "${GITHUB_WORKSPACE}/data/instances"
+
+      - name: Detect changes
+        id: diff
+        working-directory: data
+        run: |
+          git add -A instances/
+          ADDED=$(git diff --cached --name-status -- instances/ | awk '$1=="A"' | wc -l)
+          MODIFIED=$(git diff --cached --name-status -- instances/ | awk '$1=="M"' | wc -l)
+          DELETED=$(git diff --cached --name-status -- instances/ | awk '$1=="D"' | wc -l)
+          echo "added=$ADDED"       >> "$GITHUB_OUTPUT"
+          echo "modified=$MODIFIED" >> "$GITHUB_OUTPUT"
+          echo "deleted=$DELETED"   >> "$GITHUB_OUTPUT"
+          if git diff --cached --quiet -- instances/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit & push para env/${{ matrix.env }}
+        if: steps.diff.outputs.changed == 'true'
+        working-directory: data
+        env:
+          ADDED: ${{ steps.diff.outputs.added }}
+          MODIFIED: ${{ steps.diff.outputs.modified }}
+          DELETED: ${{ steps.diff.outputs.deleted }}
+          ENV_NAME: ${{ matrix.env }}
+        run: |
+          git config user.name  "grafana-backup-bot"
+          git config user.email "grafana-backup-bot@users.noreply.github.com"
+          git commit -m "chore(backup): ${ENV_NAME} sync (+${ADDED} ~${MODIFIED} -${DELETED})"
+          git push origin "HEAD:env/${ENV_NAME}"
+
+      - name: Summary
+        run: |
+          {
+            echo "## Backup ${{ matrix.env }}"
+            echo ""
+            echo "- Novos: ${{ steps.diff.outputs.added }}"
+            echo "- Alterados: ${{ steps.diff.outputs.modified }}"
+            echo "- Removidos: ${{ steps.diff.outputs.deleted }}"
+            echo "- Commit: ${{ steps.diff.outputs.changed }}"
+          } >> "$GITHUB_STEP_SUMMARY"

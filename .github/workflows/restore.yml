@@ -1,0 +1,103 @@
+name: Restore Grafana Dashboards
+
+# Restaura dashboards do branch env/<env> para a instância Grafana correspondente.
+# Sempre disparado manualmente. Use dry_run=true antes de aplicar de verdade.
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Ambiente / branch a restaurar"
+        required: true
+        type: choice
+        options:
+          - dev
+          - hml
+          - prd
+      ref:
+        description: "Commit/tag a restaurar do branch env/<env> (vazio = HEAD do branch)"
+        required: false
+        default: ""
+      folder:
+        description: "Restaurar apenas uma pasta (título); vazio = todas"
+        required: false
+        default: ""
+      uid:
+        description: "Restaurar apenas um dashboard por uid; vazio = todos"
+        required: false
+        default: ""
+      prune:
+        description: "Remover dashboards da instância que não existem no repo"
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        description: "Apenas simular (não escreve no Grafana)"
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: grafana-restore-${{ inputs.env }}
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: grafana-restore-${{ inputs.env }}
+    steps:
+      - name: Checkout default branch (scripts)
+        uses: actions/checkout@v4
+        with:
+          ref: ops/grafana-backup
+          path: main
+
+      - name: Checkout env branch (dados)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || format('env/{0}', inputs.env) }}
+          path: data
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: main/scripts/requirements.txt
+
+      - name: Install deps
+        run: pip install -r main/scripts/requirements.txt
+
+      - name: Run restore
+        working-directory: main
+        env:
+          GRAFANA_TOKEN_DEV: ${{ secrets.GRAFANA_TOKEN_DEV }}
+          GRAFANA_TOKEN_HML: ${{ secrets.GRAFANA_TOKEN_HML }}
+          GRAFANA_TOKEN_PRD: ${{ secrets.GRAFANA_TOKEN_PRD }}
+        run: |
+          ARGS=(--instance "${{ inputs.env }}" \
+                --data-dir "${GITHUB_WORKSPACE}/data/instances" \
+                --message "Restore via GH Actions @ ${{ github.sha }}")
+          [ -n "${{ inputs.folder }}" ] && ARGS+=(--folder "${{ inputs.folder }}")
+          [ -n "${{ inputs.uid }}"    ] && ARGS+=(--uid    "${{ inputs.uid }}")
+          [ "${{ inputs.prune }}"   = "true" ] && ARGS+=(--prune)
+          [ "${{ inputs.dry_run }}" = "true" ] && ARGS+=(--dry-run)
+          python scripts/restore.py "${ARGS[@]}"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Restore"
+            echo ""
+            echo "- Ambiente: \`${{ inputs.env }}\`"
+            echo "- Ref: \`${{ inputs.ref || format('env/{0}', inputs.env) }}\`"
+            echo "- Pasta: \`${{ inputs.folder || '(todas)' }}\`"
+            echo "- UID: \`${{ inputs.uid || '(todos)' }}\`"
+            echo "- Prune: \`${{ inputs.prune }}\`"
+            echo "- Dry-run: \`${{ inputs.dry_run }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
