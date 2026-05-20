@@ -42,9 +42,9 @@ jobs:
         id: diff
         run: |
           git add -A instances/
-          ADDED=$(git diff --cached --name-status -- instances/ | awk '$1=="A"' | wc -l)
-          MODIFIED=$(git diff --cached --name-status -- instances/ | awk '$1=="M"' | wc -l)
-          DELETED=$(git diff --cached --name-status -- instances/ | awk '$1=="D"' | wc -l)
+          ADDED=$(git diff --cached --name-status --no-renames -- instances/ | awk '$1=="A"' | wc -l)
+          MODIFIED=$(git diff --cached --name-status --no-renames -- instances/ | awk '$1=="M"' | wc -l)
+          DELETED=$(git diff --cached --name-status --no-renames -- instances/ | awk '$1=="D"' | wc -l)
           echo "added=$ADDED"       >> "$GITHUB_OUTPUT"
           echo "modified=$MODIFIED" >> "$GITHUB_OUTPUT"
           echo "deleted=$DELETED"   >> "$GITHUB_OUTPUT"
