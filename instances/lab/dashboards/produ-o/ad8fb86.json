@@ -43,14 +43,14 @@
       ]
     },
     "timezone": "browser",
-    "title": "infra-cpu",
-    "uid": "ad64fpd"
+    "title": "app-throughput",
+    "uid": "ad8fb86"
   },
   "folder": {
     "title": "produção",
     "uid": "bfmnlq2hfj18ge"
   },
   "tags": [],
-  "title": "infra-cpu",
-  "uid": "ad64fpd"
+  "title": "app-throughput",
+  "uid": "ad8fb86"
 }
