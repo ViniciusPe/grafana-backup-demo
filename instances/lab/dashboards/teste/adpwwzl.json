@@ -16,7 +16,6 @@
         }
       ]
     },
-    "description": "",
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
@@ -43,7 +42,7 @@
       ]
     },
     "timezone": "browser",
-    "title": "teste3",
+    "title": "teste3-editado",
     "uid": "adpwwzl"
   },
   "folder": {
@@ -51,6 +50,6 @@
     "uid": "dfmn9s5ydjzlsc"
   },
   "tags": [],
-  "title": "teste3",
+  "title": "teste3-editado",
   "uid": "adpwwzl"
 }
