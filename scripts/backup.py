@@ -69,27 +69,144 @@ def git_last_commit(repo_root: Path, rel_path: str) -> tuple[str, str]:
         return ("", "")
 
 
-def write_index(inst_dir: Path, repo_root: Path, instance_name: str, entries: list[dict]) -> None:
-    """Gera INDEX.md com Title | UID | Folder | Last SHA | Last date | File."""
-    rows = sorted(entries, key=lambda e: (e["folder"].lower(), (e["title"] or "").lower()))
+def git_historical_files(repo_root: Path, base_rel: str) -> list[str]:
+    """Lista todo caminho de arquivo .json que já existiu sob base_rel (qualquer branch)."""
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(repo_root), "log", "--all", "--pretty=format:",
+             "--name-only", "--diff-filter=A", "--", base_rel],
+            capture_output=True, text=True, timeout=20, check=False,
+        )
+        paths = {p.strip() for p in (out.stdout or "").splitlines() if p.strip()}
+        return sorted(p for p in paths if p.endswith(".json"))
+    except Exception:
+        return []
+
+
+def git_show_json(repo_root: Path, sha: str, rel_path: str) -> dict | None:
+    """Lê o conteúdo de um arquivo num commit específico."""
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(repo_root), "show", f"{sha}:{rel_path}"],
+            capture_output=True, text=True, timeout=10, check=False,
+        )
+        if out.returncode != 0 or not out.stdout:
+            return None
+        return json.loads(out.stdout)
+    except Exception:
+        return None
+
+
+def write_index(inst_dir: Path, repo_root: Path, instance_name: str, current: list[dict]) -> None:
+    """Gera INDEX.md cumulativo: ativos + removidos (histórico).
+
+    `current` traz os dashboards do snapshot atual.
+    Para descobrir os removidos, varre o histórico do git e ignora os que
+    ainda existem em disco.
+    """
+    current_by_uid = {e["uid"]: e for e in current}
+    current_paths = {e["rel_path"] for e in current}
+
+    base_rel = (inst_dir.relative_to(repo_root) / "dashboards").as_posix()
+    history_paths = git_historical_files(repo_root, base_rel)
+
+    rows: list[dict] = []
+
+    # Ativos (estado atual)
+    for e in current:
+        sha, date = git_last_commit(repo_root, e["rel_path"])
+        rows.append({
+            "title": e["title"] or "",
+            "uid": e["uid"],
+            "folder": e["folder"],
+            "status": "ativo",
+            "sha": sha,
+            "date": date,
+            "rel_path": e["rel_path"],
+        })
+
+    # Removidos (arquivos que existiram mas não estão no snapshot atual)
+    seen_uids = set(current_by_uid.keys())
+    for rel in history_paths:
+        if rel in current_paths:
+            continue
+        sha, date = git_last_commit(repo_root, rel)
+        if not sha:
+            continue
+        data = git_show_json(repo_root, sha, rel) or {}
+        uid = data.get("uid") or Path(rel).stem
+        if uid in seen_uids:
+            continue  # já listado como ativo (ex.: mudou de pasta)
+        seen_uids.add(uid)
+        folder = (data.get("folder") or {}).get("title") or "—"
+        rows.append({
+            "title": data.get("title") or "(sem título)",
+            "uid": uid,
+            "folder": folder,
+            "status": "removido",
+            "sha": sha,
+            "date": date,
+            "rel_path": rel,
+        })
+
+    # Ordena: ativos primeiro (pasta/título), depois removidos (data desc)
+    rows.sort(key=lambda r: (
+        0 if r["status"] == "ativo" else 1,
+        r["folder"].lower() if r["status"] == "ativo" else "",
+        (r["title"] or "").lower() if r["status"] == "ativo" else "",
+        "" if r["status"] == "ativo" else (9999 - 0),  # placeholder
+    ))
+    # remove + ordena por data desc separadamente
+    ativos = [r for r in rows if r["status"] == "ativo"]
+    removidos = sorted(
+        [r for r in rows if r["status"] == "removido"],
+        key=lambda r: r["date"], reverse=True,
+    )
+
+    total = len(ativos)
+    rem = len(removidos)
     lines = [
         f"# Index — {instance_name}",
         "",
-        f"Total de dashboards: **{len(rows)}**.",
+        f"- Dashboards ativos: **{total}**",
+        f"- Dashboards removidos (histórico): **{rem}**",
         "",
-        "Para fazer restore, copie o **UID** e (opcionalmente) o **SHA** do último commit que tocou no dashboard.",
+        "Para restaurar: copie o **UID** e o **SHA** da linha desejada.",
+        "Para um dashboard **removido**, o SHA é o último commit em que ele existia — use exatamente esse valor em `ref` no workflow de restore.",
+        "",
+        "## Ativos",
         "",
         "| Título | UID | Pasta | Último SHA | Última alteração | Arquivo |",
         "|---|---|---|---|---|---|",
     ]
-    for e in rows:
-        rel = e["rel_path"].replace("\\", "/")
-        sha, date = git_last_commit(repo_root, rel)
-        sha_md = f"`{sha}`" if sha else "_novo_"
-        date_md = date or "—"
-        title = (e["title"] or "").replace("|", "\\|")
-        folder = e["folder"].replace("|", "\\|")
-        lines.append(f"| {title} | `{e['uid']}` | {folder} | {sha_md} | {date_md} | [{rel}]({rel}) |")
+    for r in ativos:
+        rel = r["rel_path"].replace("\\", "/")
+        sha_md = f"`{r['sha']}`" if r["sha"] else "_novo_"
+        date_md = r["date"] or "—"
+        title = (r["title"] or "").replace("|", "\\|")
+        folder = r["folder"].replace("|", "\\|")
+        lines.append(f"| {title} | `{r['uid']}` | {folder} | {sha_md} | {date_md} | [{rel}]({rel}) |")
+
+    lines += [
+        "",
+        "## Removidos (histórico)",
+        "",
+    ]
+    if not removidos:
+        lines.append("_Nenhum dashboard removido até o momento._")
+    else:
+        lines += [
+            "| Título | UID | Pasta | SHA p/ restore | Removido após | Arquivo (snapshot) |",
+            "|---|---|---|---|---|---|",
+        ]
+        for r in removidos:
+            rel = r["rel_path"].replace("\\", "/")
+            title = (r["title"] or "").replace("|", "\\|")
+            folder = r["folder"].replace("|", "\\|")
+            lines.append(
+                f"| {title} | `{r['uid']}` | {folder} | `{r['sha']}` | {r['date']} | [{rel}](../../tree/{r['sha']}/{rel}) |"
+            )
+
     (inst_dir / "INDEX.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
