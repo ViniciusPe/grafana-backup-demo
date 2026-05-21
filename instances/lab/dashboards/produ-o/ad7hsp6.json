@@ -16,6 +16,7 @@
         }
       ]
     },
+    "description": "",
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
@@ -132,14 +133,14 @@
       ]
     },
     "timezone": "browser",
-    "title": "app-testando456",
-    "uid": "ad8nlwv"
+    "title": "app-teste",
+    "uid": "ad7hsp6"
   },
   "folder": {
     "title": "produção",
     "uid": "bfmnlq2hfj18ge"
   },
   "tags": [],
-  "title": "app-testando456",
-  "uid": "ad8nlwv"
+  "title": "app-teste",
+  "uid": "ad7hsp6"
 }
