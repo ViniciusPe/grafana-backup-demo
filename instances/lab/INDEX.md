@@ -1,7 +1,7 @@
 # Index — lab
 
-- Dashboards ativos: **7**
-- Dashboards removidos (histórico): **5**
+- Dashboards ativos: **6**
+- Dashboards removidos (histórico): **6**
 
 Para restaurar: copie o **UID** e o **SHA** da linha desejada.
 Para um dashboard **removido**, o SHA é o último commit em que ele existia — use exatamente esse valor em `ref` no workflow de restore.
@@ -14,14 +14,14 @@ Para um dashboard **removido**, o SHA é o último commit em que ele existia —
 | app-disco | `addv8v9` | produção | `2cb1f66` | 2026-05-20 | [instances/lab/dashboards/produ-o/addv8v9.json](instances/lab/dashboards/produ-o/addv8v9.json) |
 | app-erros | `adtt47j` | produção | `25867ce` | 2026-05-20 | [instances/lab/dashboards/produ-o/adtt47j.json](instances/lab/dashboards/produ-o/adtt47j.json) |
 | app-latencia-v2 | `ad6sjzv` | produção | `c2faf16` | 2026-05-20 | [instances/lab/dashboards/produ-o/ad6sjzv.json](instances/lab/dashboards/produ-o/ad6sjzv.json) |
-| app-testando | `ad8nlwv` | produção | _novo_ | — | [instances/lab/dashboards/produ-o/ad8nlwv.json](instances/lab/dashboards/produ-o/ad8nlwv.json) |
-| app-teste | `ad7hsp6` | produção | _novo_ | — | [instances/lab/dashboards/produ-o/ad7hsp6.json](instances/lab/dashboards/produ-o/ad7hsp6.json) |
+| app-testando456 | `ad8nlwv` | produção | `cf88dc9` | 2026-05-21 | [instances/lab/dashboards/produ-o/ad8nlwv.json](instances/lab/dashboards/produ-o/ad8nlwv.json) |
 | negocio-vendas | `ad4d8dk` | produção | `25867ce` | 2026-05-20 | [instances/lab/dashboards/produ-o/ad4d8dk.json](instances/lab/dashboards/produ-o/ad4d8dk.json) |
 
 ## Removidos (histórico)
 
 | Título | UID | Pasta | SHA p/ restore | Removido após | Arquivo (snapshot) |
 |---|---|---|---|---|---|
+| app-teste | `ad7hsp6` | produção | `cf88dc9` | 2026-05-21 | [instances/lab/dashboards/produ-o/ad7hsp6.json](../../tree/cf88dc9/instances/lab/dashboards/produ-o/ad7hsp6.json) |
 | (sem título) | `adk4pj6` | — | `f5a58dc` | 2026-05-20 | [instances/lab/dashboards/general/adk4pj6.json](../../tree/f5a58dc/instances/lab/dashboards/general/adk4pj6.json) |
 | (sem título) | `advh7z2` | — | `6dea904` | 2026-05-20 | [instances/lab/dashboards/general/advh7z2.json](../../tree/6dea904/instances/lab/dashboards/general/advh7z2.json) |
 | (sem título) | `ad64fpd` | — | `c4a8257` | 2026-05-20 | [instances/lab/dashboards/produ-o/ad64fpd.json](../../tree/c4a8257/instances/lab/dashboards/produ-o/ad64fpd.json) |
