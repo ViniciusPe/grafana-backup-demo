@@ -1,6 +1,6 @@
 # Index — lab
 
-- Dashboards ativos: **5**
+- Dashboards ativos: **7**
 - Dashboards removidos (histórico): **5**
 
 Para restaurar: copie o **UID** e o **SHA** da linha desejada.
@@ -14,6 +14,8 @@ Para um dashboard **removido**, o SHA é o último commit em que ele existia —
 | app-disco | `addv8v9` | produção | `2cb1f66` | 2026-05-20 | [instances/lab/dashboards/produ-o/addv8v9.json](instances/lab/dashboards/produ-o/addv8v9.json) |
 | app-erros | `adtt47j` | produção | `25867ce` | 2026-05-20 | [instances/lab/dashboards/produ-o/adtt47j.json](instances/lab/dashboards/produ-o/adtt47j.json) |
 | app-latencia-v2 | `ad6sjzv` | produção | `c2faf16` | 2026-05-20 | [instances/lab/dashboards/produ-o/ad6sjzv.json](instances/lab/dashboards/produ-o/ad6sjzv.json) |
+| app-testando | `ad8nlwv` | produção | _novo_ | — | [instances/lab/dashboards/produ-o/ad8nlwv.json](instances/lab/dashboards/produ-o/ad8nlwv.json) |
+| app-teste | `ad7hsp6` | produção | _novo_ | — | [instances/lab/dashboards/produ-o/ad7hsp6.json](instances/lab/dashboards/produ-o/ad7hsp6.json) |
 | negocio-vendas | `ad4d8dk` | produção | `25867ce` | 2026-05-20 | [instances/lab/dashboards/produ-o/ad4d8dk.json](instances/lab/dashboards/produ-o/ad4d8dk.json) |
 
 ## Removidos (histórico)
