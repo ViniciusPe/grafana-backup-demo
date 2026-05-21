@@ -16,7 +16,6 @@
         }
       ]
     },
-    "description": "",
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
@@ -43,7 +42,7 @@
       ]
     },
     "timezone": "browser",
-    "title": "oi",
+    "title": "oiv2",
     "uid": "adv24rx"
   },
   "folder": {
@@ -51,6 +50,6 @@
     "uid": ""
   },
   "tags": [],
-  "title": "oi",
+  "title": "oiv2",
   "uid": "adv24rx"
 }
