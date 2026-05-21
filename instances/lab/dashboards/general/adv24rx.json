@@ -16,6 +16,7 @@
         }
       ]
     },
+    "description": "",
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
@@ -42,14 +43,14 @@
       ]
     },
     "timezone": "browser",
-    "title": "app-latencia-v2",
-    "uid": "ad6sjzv"
+    "title": "oi",
+    "uid": "adv24rx"
   },
   "folder": {
-    "title": "produção",
-    "uid": "bfmnlq2hfj18ge"
+    "title": "General",
+    "uid": ""
   },
   "tags": [],
-  "title": "app-latencia-v2",
-  "uid": "ad6sjzv"
+  "title": "oi",
+  "uid": "adv24rx"
 }
