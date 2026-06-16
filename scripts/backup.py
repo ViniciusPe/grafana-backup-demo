@@ -224,7 +224,7 @@ def load_config() -> list[dict]:
     return data.get("instances") or []
 
 
-def backup_instance(inst: dict, data_dir: Path) -> tuple[int, int]:
+def backup_instance(inst: dict, data_dir: Path, repo_root: Path) -> tuple[int, int]:
     name = inst["name"]
     url = inst["url"]
     exclude_folders = {f.lower() for f in (inst.get("exclude_folders") or [])}
@@ -317,7 +317,7 @@ def backup_instance(inst: dict, data_dir: Path) -> tuple[int, int]:
             json.dumps(envelope, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
             encoding="utf-8",
         )
-        rel_path = out_path.relative_to(ROOT).as_posix()
+        rel_path = out_path.relative_to(repo_root).as_posix()
         index_entries.append({
             "uid": uid,
             "title": dashboard.get("title") or "",
@@ -326,7 +326,7 @@ def backup_instance(inst: dict, data_dir: Path) -> tuple[int, int]:
         })
         saved += 1
 
-    write_index(inst_dir, ROOT, name, index_entries)
+    write_index(inst_dir, repo_root, name, index_entries)
     log.info("Instância %s -> salvos: %d, ignorados: %d", name, saved, skipped)
     return saved, skipped
 
@@ -349,6 +349,8 @@ def main(argv: list[str] | None = None) -> int:
     data_dir = Path(args.data_dir).resolve()
     data_dir.mkdir(parents=True, exist_ok=True)
     log.info("Diretório de dados: %s", data_dir)
+    # Repositório que contém a pasta instances/ (ex.: checkout 'data' no workflow)
+    repo_root = data_dir.parent.resolve()
 
     instances = load_config()
     if args.instance:
@@ -362,7 +364,7 @@ def main(argv: list[str] | None = None) -> int:
     failures: list[str] = []
     for inst in instances:
         try:
-            s, k = backup_instance(inst, data_dir)
+            s, k = backup_instance(inst, data_dir, repo_root)
             total_saved += s
             total_skipped += k
         except Exception as exc:  # noqa: BLE001
