@@ -41,6 +41,14 @@ def env_token(instance_name: str) -> str:
     return tok
 
 
+def instance_verify_ssl(inst: dict) -> bool | str:
+    verify_ssl = inst.get("verify_ssl", True)
+    ca_bundle = (inst.get("ca_bundle") or "").strip()
+    if ca_bundle:
+        return ca_bundle
+    return verify_ssl
+
+
 def load_instance(name: str) -> dict:
     with CONFIG.open("r", encoding="utf-8") as fh:
         data = yaml.safe_load(fh) or {}
@@ -86,7 +94,7 @@ def ensure_folder(client: GrafanaClient, folder: dict, existing: dict[str, dict]
 
 def restore(instance: str, folder: str | None, uid: str | None, prune: bool, dry_run: bool, message: str, data_dir: Path) -> int:
     inst = load_instance(instance)
-    client = GrafanaClient(inst["url"], env_token(instance))
+    client = GrafanaClient(inst["url"], env_token(instance), verify_ssl=instance_verify_ssl(inst))
     log.info("Health: %s", client.health())
     log.info("Diretório de dados: %s", data_dir)
 

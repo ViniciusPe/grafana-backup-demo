@@ -14,15 +14,18 @@
 instances:
   - name: dev
     url: https://grafana.prebanco.com.br
+    verify_ssl: false
     exclude_folders: []
     exclude_tags: []
 
   - name: hml
     url: https://grafana.neth.bradesco.com.br
+    verify_ssl: false
     exclude_folders: []
     exclude_tags: []
 
   - name: prd
     url: https://grafana.corp.bradesco.com.br
+    verify_ssl: false
     exclude_folders: []
     exclude_tags: []

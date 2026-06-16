@@ -20,7 +20,7 @@ class GrafanaError(RuntimeError):
 
 
 class GrafanaClient:
-    def __init__(self, base_url: str, token: str, timeout: int = 30):
+    def __init__(self, base_url: str, token: str, timeout: int = 30, verify_ssl: bool | str = True):
         if not base_url:
             raise GrafanaError("base_url vazio")
         if not token:
@@ -28,6 +28,7 @@ class GrafanaClient:
         self.base_url = base_url.rstrip("/") + "/"
         self.timeout = timeout
         self.session = requests.Session()
+        self.session.verify = verify_ssl
         self.session.headers.update(
             {
                 "Authorization": f"Bearer {token}",
@@ -35,6 +36,8 @@ class GrafanaClient:
                 "Content-Type": "application/json",
             }
         )
+        if verify_ssl is False:
+            log.warning("TLS verification desabilitada para %s", self.base_url)
 
     # ---- núcleo HTTP -------------------------------------------------------
     def _request(self, method: str, path: str, **kwargs: Any) -> Any:

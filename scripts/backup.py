@@ -49,6 +49,14 @@ def env_token(instance_name: str) -> str:
     return tok
 
 
+def instance_verify_ssl(inst: dict) -> bool | str:
+    verify_ssl = inst.get("verify_ssl", True)
+    ca_bundle = (inst.get("ca_bundle") or "").strip()
+    if ca_bundle:
+        return ca_bundle
+    return verify_ssl
+
+
 def git_last_commit(repo_root: Path, rel_path: str) -> tuple[str, str]:
     """Retorna (sha curto, data ISO) do último commit que tocou o arquivo.
 
@@ -223,7 +231,7 @@ def backup_instance(inst: dict, data_dir: Path) -> tuple[int, int]:
     exclude_tags = {t.lower() for t in (inst.get("exclude_tags") or [])}
 
     log.info("=== Instância %s (%s) ===", name, url)
-    client = GrafanaClient(url, env_token(name))
+    client = GrafanaClient(url, env_token(name), verify_ssl=instance_verify_ssl(inst))
     health = client.health()
     log.info("Health: %s", health)
 
