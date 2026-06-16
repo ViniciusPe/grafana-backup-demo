@@ -12,22 +12,17 @@
 # Docs: https://grafana.com/docs/grafana/latest/administration/service-accounts/
 
 instances:
-  # DEMO — Grafana rodando em VM Azure
-  - name: lab
-    url: http://23.101.144.142:3000
+  - name: dev
+    url: https://grafana.prebanco.com.br
     exclude_folders: []
     exclude_tags: []
 
-  # Produção (referência, não usados no demo)
-  # - name: dev
-  #   url: https://grafana-dev.exemplo.com
-  #   exclude_folders: []
-  #   exclude_tags: []
-  # - name: hml
-  #   url: https://grafana-hml.exemplo.com
-  #   exclude_folders: []
-  #   exclude_tags: []
-  # - name: prd
-  #   url: https://grafana-prd.exemplo.com
-  #   exclude_folders: []
-  #   exclude_tags: []
+  - name: hml
+    url: https://grafana.neth.bradesco.com.br
+    exclude_folders: []
+    exclude_tags: []
+
+  - name: prd
+    url: https://grafana.corp.bradesco.com.br
+    exclude_folders: []
+    exclude_tags: []

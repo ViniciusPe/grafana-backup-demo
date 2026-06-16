@@ -46,9 +46,8 @@ concurrency:
 
 jobs:
   restore:
-    runs-on: ubuntu-latest
+    runs-on: ${{ (inputs.env == 'dev' && vars.RUNNER_DEV_LOW) || (inputs.env == 'hml' && vars.RUNNER_HOM_LOW) || (inputs.env == 'prd' && vars.RUNNER_PRD_LOW) || 'ubuntu-latest' }}
     timeout-minutes: 30
-    environment: grafana-restore-${{ inputs.env }}
     steps:
       - name: Checkout default branch (scripts)
         uses: actions/checkout@v4
