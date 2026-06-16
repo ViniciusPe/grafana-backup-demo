@@ -1,7 +1,7 @@
 name: Backup Grafana Dashboards
 
 # Modelo: 1 ambiente = 1 branch (env/<env>).
-# Default branch deste repo: ops/grafana-backup (contém scripts + workflows).
+# Scripts/workflows rodam a partir da branch padrão atual do repositório.
 # Cada ambiente (dev/hml/prd) roda em seu próprio job com runner corporativo específico.
 
 on:
@@ -35,10 +35,9 @@ jobs:
     env:
       ENV_NAME: dev
     steps:
-      - name: Checkout scripts (ops/grafana-backup)
+      - name: Checkout scripts (default branch)
         uses: actions/checkout@v4
         with:
-          ref: ops/grafana-backup
           path: main
 
       - name: Checkout data (env/dev)
@@ -113,10 +112,9 @@ jobs:
     runs-on: ${{ vars.RUNNER_HOM_LOW }}
     timeout-minutes: 30
     steps:
-      - name: Checkout scripts (ops/grafana-backup)
+      - name: Checkout scripts (default branch)
         uses: actions/checkout@v4
         with:
-          ref: ops/grafana-backup
           path: main
 
       - name: Checkout data (env/hml)
@@ -191,10 +189,9 @@ jobs:
     runs-on: ${{ vars.RUNNER_PRD_LOW }}
     timeout-minutes: 30
     steps:
-      - name: Checkout scripts (ops/grafana-backup)
+      - name: Checkout scripts (default branch)
         uses: actions/checkout@v4
         with:
-          ref: ops/grafana-backup
           path: main
 
       - name: Checkout data (env/prd)
