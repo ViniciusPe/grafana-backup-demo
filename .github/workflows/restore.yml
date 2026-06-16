@@ -49,10 +49,9 @@ jobs:
     runs-on: ${{ (inputs.env == 'dev' && vars.RUNNER_DEV_LOW) || (inputs.env == 'hml' && vars.RUNNER_HOM_LOW) || (inputs.env == 'prd' && vars.RUNNER_PRD_LOW) || 'ubuntu-latest' }}
     timeout-minutes: 30
     steps:
-      - name: Checkout default branch (scripts)
+      - name: Checkout scripts (default branch)
         uses: actions/checkout@v4
         with:
-          ref: ops/grafana-backup
           path: main
 
       - name: Checkout env branch (dados)
